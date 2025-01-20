@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  appeal-prediction:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./models:/app/models 

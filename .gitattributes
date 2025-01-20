@@ -1,0 +1,6 @@
+.models/** filter=lfs diff=lfs merge=lfs -text
+models/ filter=lfs diff=lfs merge=lfs -text
+*.safetensors filter=lfs diff=lfs merge=lfs -text
+models/* filter=lfs diff=lfs merge=lfs -text
+models/robbert_model/* filter=lfs diff=lfs merge=lfs -text
+models/robbert_tokenizer/* filter=lfs diff=lfs merge=lfs -text

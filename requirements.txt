@@ -1,0 +1,14 @@
+streamlit
+torch
+transformers
+plotly
+pandas
+fpdf
+PyPDF2
+lime
+matplotlib
+numpy
+sentence-transformers
+scikit-learn
+joblib
+nltk 
