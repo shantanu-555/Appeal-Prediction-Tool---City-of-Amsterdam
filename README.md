@@ -9,11 +9,9 @@ This application leverages **RobBERT**, a state-of-the-art Dutch language model,
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
   - [1. Clone the Repository](#1-clone-the-repository)
-  - [2. Download Model Files](#2-download-model-files)
-  - [3. Build and Run with Docker](#3-build-and-run-with-docker)
+  - [2. Build and Run with Docker](#2-build-and-run-with-docker)
 - [Usage](#usage)
-- [Troubleshooting](#troubleshooting)  
-- [License](#license)
+- [Troubleshooting](#troubleshooting)
 - [Contact](#contact)
 
 ## 🛠️ Features
@@ -59,65 +57,23 @@ Follow these steps to clone the repository, set up the necessary models, and run
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-repo/appeal-prediction-tool.git
-cd appeal-prediction-tool
+git clone https://github.com/shantanu-555/Appeal-Prediction-Tool---City-of-Amsterdam.git
+cd Appeal-Prediction-Tool---City-of-Amsterdam
 ```
 
-### 2. Download Model Files
-
-The application requires specific model files to function correctly. Follow these steps to obtain and set up the models:
-
-1. **Create Models Directory**:
-   
-   Ensure a `models` directory exists in the project root:
-
-   ```bash
-   mkdir -p models
-   ```
-
-2. **Download Models**:
-   
-   - **RobBERT Model and Tokenizer**:
-     - Download the RobBERT model files (`robbert_model/`) and tokenizer files (`robbert_tokenizer/`) from [here](https://your-model-storage-link).
-     - Extract and place them into the `models` directory:
-
-       ```
-       models/
-       ├── robbert_model/
-       └── robbert_tokenizer/
-       ```
-
-   - **Training Embeddings and Texts**:
-     - Download `training_embeddings.joblib` and `training_texts.joblib` from [here](https://your-model-storage-link).
-     - Place these files directly into the `models` directory:
-
-       ```
-       models/
-       ├── training_embeddings.joblib
-       └── training_texts.joblib
-       ```
-
-> **Note**: Replace `https://your-model-storage-link` with the actual URLs where your model files are hosted. You may use services like Google Drive, Dropbox, or an internal company storage solution.
-
-### 3. Build and Run with Docker
+### 2. Build and Run with Docker
 
 Using Docker ensures a consistent environment for running the application.
 
-1. **Build the Docker Image**:
+1. **Build and Run the Docker Image**:
 
    ```bash
-   docker-compose build
-   ```
-
-2. **Run the Docker Container**:
-
-   ```bash
-   docker-compose up
+   docker-compose up --build
    ```
 
    The application will start and be accessible at [http://localhost:8501](http://localhost:8501).
 
-3. **Stopping the Application**:
+2. **Stopping the Application**:
 
    To stop the application, press `CTRL+C` in the terminal where Docker is running, then execute:
 
@@ -190,10 +146,6 @@ If you encounter issues while running the application, consider the following st
 6. **Network Issues**:
    
    Ensure that Docker has the necessary network access and that no firewalls are blocking the port.
-
-## 📄 License
-
-[MIT License](LICENSE)
 
 ## 📬 Contact
 
