@@ -592,6 +592,10 @@ def main():
         layout="wide"
     )
     
+    # Add URL helper message
+    if st.get_page_config().get('server_address') == '0.0.0.0':
+        st.info("📌 Access the application at [http://localhost:8501](http://localhost:8501)")
+    
     st.title("🏛️ Appeal Prediction Analysis - City of Amsterdam")
     st.markdown("""
     This application uses RobBERT, a state-of-the-art Dutch language model, to predict whether a citizen is likely 
