@@ -593,8 +593,11 @@ def main():
     )
     
     # Add URL helper message
-    if st.get_page_config().get('server_address') == '0.0.0.0':
-        st.info("📌 Access the application at [http://localhost:8501](http://localhost:8501)")
+    st.markdown("""
+    <div style='background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 20px'>
+    📌 If you see '0.0.0.0:8501' in your browser, please use <a href='http://localhost:8501'>http://localhost:8501</a> instead
+    </div>
+    """, unsafe_allow_html=True)
     
     st.title("🏛️ Appeal Prediction Analysis - City of Amsterdam")
     st.markdown("""
