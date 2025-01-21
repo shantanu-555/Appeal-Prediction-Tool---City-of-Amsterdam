@@ -390,6 +390,9 @@ def export_to_pdf(results: List[Dict], texts: List[str], lime_explanations=None,
 
 def explain_prediction_lime(text: str, pipeline: RobBERTClassificationPipeline) -> dict:
     """Generate LIME explanation for the prediction"""
+    # First clean the text using the same pipeline cleaning method
+    cleaned_text = pipeline.clean_dutch_text(text)
+    
     explainer = lime.lime_text.LimeTextExplainer(
         class_names=['Negative', 'Positive'],
         split_expression=lambda x: x.split(),
@@ -397,27 +400,25 @@ def explain_prediction_lime(text: str, pipeline: RobBERTClassificationPipeline) 
     )
     
     exp = explainer.explain_instance(
-        text,
+        cleaned_text,  # Use cleaned text instead of raw
         pipeline.predict_proba,
-        num_features=10,  # Changed from 6 to 10 for more words
-        num_samples=100   # Keeping the optimized sample size
+        num_features=10,
+        num_samples=100
     )
     
     # Extract explanation data
     explanation_data = {
         'words': [],
         'weights': [],
-        'top_words': []  # For storing top influential words
+        'top_words': []
     }
     
     for word, weight in exp.as_list():
         if abs(weight) > 0.01:  # Only include significant impacts
             explanation_data['words'].append(word)
             explanation_data['weights'].append(weight)
-            # Store word and its absolute impact for top words
             explanation_data['top_words'].append((word, abs(weight)))
     
-    # Sort top_words by absolute impact and get top 5 for the sidebar
     explanation_data['top_words'].sort(key=lambda x: x[1], reverse=True)
     explanation_data['top_words'] = [word for word, _ in explanation_data['top_words'][:5]]
     
