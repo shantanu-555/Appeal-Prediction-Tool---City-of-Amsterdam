@@ -556,15 +556,20 @@ def create_triple_gauge_chart(model_prob: float, similar_prob: float, composite_
     )
     return fig
 
-def calculate_composite_confidence(prediction: int, model_probability: float, similar_cases: List[Dict]) -> Tuple[float, float, float, str]:
-    """Calculate all confidence scores and return model, similarity, composite confidences and explanation."""
+def calculate_composite_confidence(prediction: int, model_probability: float, similar_cases: List[Dict]) -> Tuple[float, float, float, str, int]:
+    """Calculate all confidence scores and return model, similarity, composite confidences, explanation and final prediction."""
     if not similar_cases:
-        return model_probability, 0.0, model_probability, "Based on model prediction only"
+        composite_conf = model_probability
+        # Only return the model's prediction if confidence > 0.5
+        final_pred = prediction if composite_conf > 0.5 else None
+        return model_probability, 0.0, composite_conf, "Based on model prediction only", final_pred
         
     # Calculate similarity-weighted vote from similar cases
     total_similarity = sum(case['similarity'] for case in similar_cases)
     if total_similarity == 0:
-        return model_probability, 0.0, model_probability, "Based on model prediction only"
+        composite_conf = model_probability
+        final_pred = prediction if composite_conf > 0.5 else None
+        return model_probability, 0.0, composite_conf, "Based on model prediction only", final_pred
         
     similar_vote = sum(
         case['similarity'] * (1 if case['label'] == prediction else 0)
@@ -576,14 +581,17 @@ def calculate_composite_confidence(prediction: int, model_probability: float, si
     similar_weight = 1 - model_weight
     
     # Calculate composite confidence
-    composite_confidence = (model_weight * model_probability) + (similar_weight * similar_vote)
+    composite_conf = (model_weight * model_probability) + (similar_weight * similar_vote)
     
     # Generate explanation
     agreement = sum(1 for case in similar_cases if case['label'] == prediction)
     explanation = f"Based on model prediction ({model_probability:.1%}, weight: {model_weight:.1%}) and "
     explanation += f"{agreement}/{len(similar_cases)} similar cases agreeing (weight: {similar_weight:.1%})"
     
-    return model_probability, similar_vote, composite_confidence, explanation
+    # Only return a prediction if composite confidence is high enough
+    final_pred = prediction if composite_conf > 0.5 else None
+    
+    return model_probability, similar_vote, composite_conf, explanation, final_pred
 
 def main():
     st.set_page_config(
@@ -650,19 +658,23 @@ def main():
                             similar_cases = pipeline.find_similar_cases(text_input)
                             
                             # Calculate composite confidence
-                            model_conf, similar_conf, composite_conf, explanation = calculate_composite_confidence(
+                            model_conf, similar_conf, composite_conf, explanation, final_prediction = calculate_composite_confidence(
                                 result['prediction'],
                                 result['probability'],
                                 similar_cases
                             )
                             
                             # Main results section
-                            col1, col2 = st.columns([0.8, 0.2])  # Adjust ratio to give more space to gauges
+                            col1, col2 = st.columns([0.8, 0.2])
                             
                             with col1:
                                 st.subheader("Classification Results")
-                                prediction_label = "Positive" if result['prediction'] == 1 else "Negative"
-                                st.markdown(f"**Prediction:** {prediction_label}")
+                                if final_prediction is not None:
+                                    prediction_label = "Positive (Likely to Appeal)" if final_prediction == 1 else "Negative (Unlikely to Appeal)"
+                                    confidence_color = "red" if final_prediction == 1 else "green"
+                                    st.markdown(f"**Prediction:** <span style='color:{confidence_color}'>{prediction_label}</span>", unsafe_allow_html=True)
+                                else:
+                                    st.markdown("**Prediction:** <span style='color:orange'>Insufficient confidence to make a prediction</span>", unsafe_allow_html=True)
                                 
                                 # Create and display triple gauge chart
                                 fig = create_triple_gauge_chart(
