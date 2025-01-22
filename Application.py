@@ -700,6 +700,14 @@ def main():
                                 )
                                 st.plotly_chart(fig, use_container_width=True)
 
+                                # Add gauge explanations
+                                st.markdown("""
+                                **Understanding the Confidence Gauges:**
+                                * **Model Confidence**: RobBERT model's confidence in its initial prediction
+                                * **Similarity Confidence**: How strongly similar historical cases support the prediction
+                                * **Composite Confidence**: Final weighted confidence (60% model, 40% similarity) determining the prediction shown above
+                                """)
+
                             with col2:
                                 st.markdown("##### Influential Words")  # Smaller header
                                 if lime_explanation['top_words']:
