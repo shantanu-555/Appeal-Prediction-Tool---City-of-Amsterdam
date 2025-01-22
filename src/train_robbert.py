@@ -90,11 +90,11 @@ def clean_dutch_text(text):
 
 def main():
     # Load data
-    df = pd.read_csv('merged_data.csv', index_col=0)
+    df = pd.read_csv('../data/merged_data.csv', index_col=0)
     df['cleaned_text'] = df['geanonimiseerd_doc_inhoud'].apply(clean_dutch_text)
     
     # Create train/test split
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df['target'])
+    train_df, test_df = train_test_split(df, test_size=0.2, random_state=55, stratify=df['target'])
     
     # Prepare datasets with proper column names
     train_df = train_df.rename(columns={'cleaned_text': 'text', 'target': 'labels'})
@@ -182,8 +182,8 @@ def main():
     print("\nEvaluation Results:", eval_results)
     
     # Save model and tokenizer
-    model.save_pretrained("./robbert_model")
-    tokenizer.save_pretrained("./robbert_tokenizer")
+    model.save_pretrained("../models/robbert_model")
+    tokenizer.save_pretrained("../models/robbert_tokenizer")
     print("\nModel and tokenizer saved successfully!")
 
 if __name__ == "__main__":

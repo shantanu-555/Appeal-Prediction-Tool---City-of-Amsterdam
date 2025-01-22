@@ -10,8 +10,8 @@ from tqdm import tqdm
 
 def load_data():
     """Load the training data and embeddings"""
-    training_embeddings = joblib.load('training_embeddings.joblib')
-    training_texts = joblib.load('training_texts.joblib')
+    training_embeddings = joblib.load('../models/training_embeddings.joblib')
+    training_texts = joblib.load('../models/training_texts.joblib')
     return training_embeddings, training_texts
 
 def find_similar_cases(
@@ -121,7 +121,7 @@ def plot_results(results: pd.DataFrame):
     plt.title('Performance vs Model Weight')
     plt.legend()
     plt.grid(True)
-    plt.savefig('weight_evaluation.png')
+    plt.savefig('../eval_results/weight_evaluation.png')
     plt.close()
 
 def main():

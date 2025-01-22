@@ -67,8 +67,8 @@ def compute_metrics(pred):
 
 def main():
     # Load the saved model and tokenizer
-    model_path = "./robbert_model"
-    tokenizer_path = "./robbert_tokenizer"
+    model_path = "../models/robbert_model"
+    tokenizer_path = "../models/robbert_tokenizer"
     
     logging.info("Loading model and tokenizer...")
     model = RobertaForSequenceClassification.from_pretrained(model_path)
@@ -76,7 +76,7 @@ def main():
     
     # Load and preprocess test data
     logging.info("Loading and preprocessing test data...")
-    df = pd.read_csv('merged_data.csv', index_col=0)
+    df = pd.read_csv('../data/merged_data.csv', index_col=0)
     df['text'] = df['geanonimiseerd_doc_inhoud'].apply(clean_dutch_text)
     
     # Split data
@@ -84,7 +84,7 @@ def main():
         df, 
         test_size=0.2, 
         stratify=df['target'], 
-        random_state=42
+        random_state=55
     )
     
     # Prepare test dataset
@@ -163,7 +163,7 @@ def main():
     ax2.set_title('RobBERT Confusion Matrix (Normalized)')
     
     plt.tight_layout()
-    plt.savefig('robbert_confusion_matrix.png')
+    plt.savefig('../eval_results/robbert_confusion_matrix.png')
     plt.close()
     
     # Generate ROC curve
@@ -180,7 +180,7 @@ def main():
     plt.ylabel('True Positive Rate')
     plt.title('RobBERT ROC Curve')
     plt.legend(loc="lower right")
-    plt.savefig('robbert_roc_curve.png')
+    plt.savefig('../eval_results/robbert_roc_curve.png')
     plt.close()
     
     # Save detailed metrics to file
@@ -195,7 +195,7 @@ def main():
             results.metrics['test_avg_confidence']
         ]
     })
-    metrics_df.to_csv('robbert_evaluation_metrics.csv', index=False)
+    metrics_df.to_csv('../eval_results/robbert_evaluation_metrics.csv', index=False)
     logging.info("\nEvaluation completed. Results saved to files.")
 
 if __name__ == "__main__":
