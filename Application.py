@@ -19,6 +19,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import joblib
 import os
 import datetime
+from sklearn.model_selection import train_test_split
+import logging
 
 class RobBERTClassificationPipeline:
     def __init__(self, model_path: str, tokenizer_path: str):
@@ -72,27 +74,57 @@ class RobBERTClassificationPipeline:
             raise Exception(f"Error initializing pipeline: {str(e)}")
 
     def _create_training_embeddings(self):
-        """Create and save embeddings for training data."""
-        # Load training data
-        df = pd.read_csv('merged_data.csv', index_col=0)
-        
-        # Clean texts
-        self.training_texts = []
-        for idx, row in df.iterrows():
-            text = self.clean_dutch_text(row['geanonimiseerd_doc_inhoud'])
-            label = row['target']
-            self.training_texts.append({
-                'text': text,
-                'label': label
-            })
-        
-        # Create embeddings
-        texts_only = [item['text'] for item in self.training_texts]
-        self.training_embeddings = self.sentence_model.encode(texts_only)
-        
-        # Save embeddings and texts
-        joblib.dump(self.training_embeddings, self.embeddings_file)
-        joblib.dump(self.training_texts, self.training_texts_file)
+        """Create and save embeddings for training data only."""
+        try:
+            # Ensure models directory exists
+            os.makedirs('models', exist_ok=True)
+            
+            # Load full data
+            data_path = os.path.join('data', 'merged_data.csv')
+            if not os.path.exists(data_path):
+                raise FileNotFoundError(f"Data file not found at {data_path}")
+            
+            df = pd.read_csv(data_path, index_col=0)
+            
+            # Important: Create a unique identifier for each document
+            df['doc_id'] = df.index
+            
+            # Split into train/test using the same split as in training
+            train_df, test_df = train_test_split(
+                df, 
+                test_size=0.2, 
+                random_state=55,  # Use same random state as training
+                stratify=df['target']
+            )
+            
+            # Save test set IDs to ensure we can identify test documents
+            test_ids = set(test_df['doc_id'].values)
+            joblib.dump(test_ids, os.path.join('models', 'test_set_ids.joblib'))
+            
+            # Clean texts (only from training data)
+            self.training_texts = []
+            for idx, row in train_df.iterrows():
+                text = self.clean_dutch_text(row['geanonimiseerd_doc_inhoud'])
+                label = row['target']
+                self.training_texts.append({
+                    'text': text,
+                    'label': label,
+                    'doc_id': row['doc_id']  # Store document ID
+                })
+            
+            # Create embeddings
+            texts_only = [item['text'] for item in self.training_texts]
+            self.training_embeddings = self.sentence_model.encode(texts_only)
+            
+            # Save embeddings and texts
+            joblib.dump(self.training_embeddings, self.embeddings_file)
+            joblib.dump(self.training_texts, self.training_texts_file)
+            
+            logging.info(f"Successfully created and saved embeddings for {len(texts_only)} training documents")
+            
+        except Exception as e:
+            logging.error(f"Error creating embeddings: {str(e)}")
+            raise Exception(f"Failed to create embeddings: {str(e)}")
 
     def clean_dutch_text(self, text, stopword_list=None):
         if stopword_list is None:
@@ -235,6 +267,11 @@ class RobBERTClassificationPipeline:
             
             similar_cases = []
             for idx in top_indices:
+                # Add similarity threshold
+                if similarities[idx] > 0.98:  # If similarity is too high, might be test case
+                    logging.warning(f"Very high similarity ({similarities[idx]:.3f}) detected. Possible test case.")
+                    continue
+                    
                 similar_cases.append({
                     'text': self.training_texts[idx]['text'],
                     'label': self.training_texts[idx]['label'],

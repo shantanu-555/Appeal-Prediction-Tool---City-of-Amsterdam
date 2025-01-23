@@ -7,6 +7,7 @@ import joblib
 from typing import List, Dict, Tuple
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from sklearn.model_selection import KFold
 
 def load_data():
     """Load the training data and embeddings"""
@@ -62,51 +63,55 @@ def calculate_composite_prediction(
     
     return composite_pred, composite_confidence
 
-def evaluate_weights(
+def evaluate_weights_cv(
     embeddings: np.ndarray,
     texts: List[Dict],
     model_predictions: np.ndarray,
     model_probabilities: np.ndarray,
     true_labels: np.ndarray,
-    weight_range: np.ndarray
+    weight_range: np.ndarray,
+    n_splits: int = 5
 ) -> Dict:
-    """Evaluate different weight combinations"""
+    """Evaluate different weight combinations using cross-validation"""
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=55)
     results = []
     
     for weight in tqdm(weight_range):
-        composite_preds = []
-        composite_confs = []
+        fold_scores = {'accuracy': [], 'f1': []}
         
-        # For each sample, calculate composite prediction
-        for i in range(len(texts)):
-            # Get similar cases (excluding the current case)
-            mask = np.ones(len(texts), dtype=bool)
-            mask[i] = False
-            similar_cases = find_similar_cases(
-                embeddings[i],
-                embeddings[mask],
-                [texts[j] for j, m in enumerate(mask) if m],
-                n_cases=2
-            )
+        for train_idx, val_idx in kf.split(embeddings):
+            composite_preds = []
+            composite_confs = []
             
-            # Calculate composite prediction
-            pred, conf = calculate_composite_prediction(
-                model_predictions[i],
-                model_probabilities[i],
-                similar_cases,
-                weight
-            )
-            composite_preds.append(pred)
-            composite_confs.append(conf)
+            # For each validation sample
+            for i in val_idx:
+                # Get similar cases from training set only
+                similar_cases = find_similar_cases(
+                    embeddings[i],
+                    embeddings[train_idx],
+                    [texts[j] for j in train_idx],
+                    n_cases=2
+                )
+                
+                # Calculate composite prediction
+                pred, conf = calculate_composite_prediction(
+                    model_predictions[i],
+                    model_probabilities[i],
+                    similar_cases,
+                    weight
+                )
+                composite_preds.append(pred)
+                composite_confs.append(conf)
+            
+            # Calculate metrics for this fold
+            fold_scores['accuracy'].append(accuracy_score(true_labels[val_idx], composite_preds))
+            fold_scores['f1'].append(f1_score(true_labels[val_idx], composite_preds))
         
-        # Calculate metrics
-        accuracy = accuracy_score(true_labels, composite_preds)
-        f1 = f1_score(true_labels, composite_preds)
-        
+        # Average scores across folds
         results.append({
             'model_weight': weight,
-            'accuracy': accuracy,
-            'f1': f1
+            'accuracy': np.mean(fold_scores['accuracy']),
+            'f1': np.mean(fold_scores['f1'])
         })
     
     return pd.DataFrame(results)
@@ -138,7 +143,7 @@ def main():
     # Evaluate different weights
     print("Evaluating weights...")
     weight_range = np.arange(0.1, 1.0, 0.1)
-    results = evaluate_weights(
+    results = evaluate_weights_cv(
         embeddings,
         texts,
         model_predictions,
